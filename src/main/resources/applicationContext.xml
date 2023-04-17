@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:property-placeholder location="passwords.properties,bot.properties"/>
+
+
+    <context:component-scan base-package="io.github.serq0.discordbot"/>
+
+    <!--
+    DATABASES
+    -->
+    <bean id="nullDb" class="io.github.serq0.discordbot.database.NullDatabase" init-method="init"
+          destroy-method="destroy">
+    </bean>
+    <bean id="sqliteDb" class="io.github.serq0.discordbot.database.SQLiteDatabase" init-method="initDb"
+          destroy-method="destroy">
+    </bean>
+
+    <bean id="dateParser" class="io.github.serq0.discordbot.DateParser">
+        <property name="dateFormat" value="${bot.dateFormat}"/>
+    </bean>
+
+    <bean id="discordBot" class="io.github.serq0.discordbot.DiscordBot" init-method="init">
+        <property name="token" value="${discord.token}"/>
+        <property name="commandPrefix" value="${bot.prefix}"/>
+        <property name="eventHandler" ref="messageReceivedEventHandler"/>
+        <property name="database" ref="sqliteDb"/>
+        <property name="dateParser" ref="dateParser"/>
+    </bean>
+
+    <bean id="messageReceivedEventHandler" class="io.github.serq0.discordbot.MessageReceivedEventHandler">
+        <constructor-arg ref="discordBot"/>
+        <property name="validator" ref="commandValidator"/>
+    </bean>
+
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations">
+            <list>
+                <value>classpath:database.properties</value>
+            </list>
+        </property>
+    </bean>
+
+    <!--
+    COMMANDS
+    -->
+    <bean id="helloCommand" class="io.github.serq0.discordbot.commands.general.HelloCommand"/>
+    <bean id="helloDelayCommand" class="io.github.serq0.discordbot.commands.general.HelloDelayCommand"/>
+    <bean id="rollCommand" class="io.github.serq0.discordbot.commands.general.RollCommand"/>
+    <bean id="commandsCommand" class="io.github.serq0.discordbot.commands.general.CommandsCommand"/>
+    <bean id="commandValidator" class="io.github.serq0.discordbot.CommandValidator">
+        <constructor-arg ref="discordBot"/>
+        <property name="commandMap">
+            <map>
+                <entry key="hello" value-ref="helloCommand"/>
+                <entry key="helloDelay" value-ref="helloDelayCommand"/>
+                <entry key="roll" value-ref="rollCommand"/>
+                <entry key="commands" value-ref="commandsCommand"/>
+            </map>
+        </property>
+    </bean>
+
+
+</beans>
+
+
+
+
+
